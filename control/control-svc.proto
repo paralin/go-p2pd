@@ -1,0 +1,35 @@
+syntax = "proto3";
+package control;
+
+// CreateNodeRequest is the argument to CreateNode.
+message CreateNodeRequest {
+  // NodeId is the desired ID for the node.
+  string node_id = 1;
+}
+
+// CreateNodeResponse is the response to CreateNode.
+message CreateNodeResponse {
+  // NodePeerId is the peer ID of the new node.
+  string node_peer_id = 1;
+}
+
+// StartNodeRequest is the argument to the StartNode call.
+message StartNodeRequest {
+  // NodeId is the ID of the node as given at creation time.
+  string node_id = 1;
+}
+
+message StartNodeResponse {
+  // NodePeerId is the peer ID of the node.
+  string node_peer_id = 1;
+  // NodeListenAddrs are the addresses the node is listening on.
+  repeated string node_listen_addrs = 2;
+}
+
+// ControlService controls the p2pd daemon.
+service ControlService {
+  // CreateNode creates a new node.
+  rpc CreateNode(CreateNodeRequest) returns (CreateNodeResponse) {}
+  // StartNode starts a node.
+  rpc StartNode(StartNodeRequest) returns (StartNodeResponse) {}
+}
