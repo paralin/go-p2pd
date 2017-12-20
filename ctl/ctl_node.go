@@ -8,6 +8,7 @@ var CtlNodeCommands []cli.Command
 
 func init() {
 	initNodeAdd()
+	initNodeStart()
 	CtlCommands = append(CtlCommands, cli.Command{
 		Name:        "node",
 		Usage:       "Contains all node-related subcommands.",

@@ -47,3 +47,35 @@ func (d *daemonControlServer) CreateNode(
 		NodePeerId: nNode.GetPeerId().Pretty(),
 	}, nil
 }
+
+// StartNode starts a node.
+func (d *daemonControlServer) StartNode(
+	ctx context.Context,
+	req *control.StartNodeRequest,
+) (*control.StartNodeResponse, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	nodeId := req.GetNodeId()
+	spec, err := d.daemonDb.GetNode(nodeId)
+	if err != nil {
+		return nil, err
+	}
+	if spec == nil {
+		return nil, errors.Errorf("node id not known: %s", nodeId)
+	}
+
+	nod, err := d.Daemon.StartNode(spec)
+	if err != nil {
+		return nil, errors.WithMessage(err, "start node")
+	}
+
+	resp := &control.StartNodeResponse{NodePeerId: nod.GetPeerId().Pretty()}
+	laddrs := nod.GetListenAddrs()
+	for _, addr := range laddrs {
+		resp.NodeListenAddrs = append(resp.NodeListenAddrs, addr.String())
+	}
+
+	return resp, nil
+}

@@ -20,9 +20,12 @@ type Node struct {
 	peerId    peer.ID
 	peerStore pstore.Peerstore
 
-	mtx  sync.RWMutex
-	net  *swarm.Network
-	host *bhost.BasicHost
+	mtx    sync.RWMutex
+	net    *swarm.Network
+	host   *bhost.BasicHost
+	priv   crypto.PrivKey
+	pub    crypto.PubKey
+	laddrs []ma.Multiaddr
 }
 
 // nodeFromKeys builds a node from the specified private and public keypair.
@@ -36,7 +39,13 @@ func nodeFromKeys(id string, priv crypto.PrivKey, pub crypto.PubKey) (*Node, err
 	ps.AddPrivKey(pid, priv)
 	ps.AddPubKey(pid, pub)
 
-	return &Node{id: id, peerStore: ps, peerId: pid}, nil
+	return &Node{
+		id:        id,
+		peerStore: ps,
+		peerId:    pid,
+		priv:      priv,
+		pub:       pub,
+	}, nil
 }
 
 // NewNode builds a new node from scratch, generating an identity.
@@ -49,6 +58,28 @@ func NewNode(id string) (*Node, error) {
 	return nodeFromKeys(id, priv, pub)
 }
 
+// FromSpec builds a node from its spec.
+func FromSpec(spec *NodeSpec) (*Node, error) {
+	if err := spec.Validate(); err != nil {
+		return nil, err
+	}
+
+	privKey, err := spec.UnmarshalPrivKey()
+	if err != nil {
+		return nil, err
+	}
+
+	return nodeFromKeys(spec.ID, privKey, privKey.GetPublic())
+}
+
+// GetListenAddrs returns the addresses the node has been started with.
+func (n *Node) GetListenAddrs() []ma.Multiaddr {
+	n.mtx.RLock()
+	defer n.mtx.RUnlock()
+
+	return n.laddrs
+}
+
 // StartWithAddrs starts the node.
 func (n *Node) StartWithAddrs(ctx context.Context, listenAddrs []ma.Multiaddr) error {
 	n.mtx.Lock()
@@ -58,6 +89,7 @@ func (n *Node) StartWithAddrs(ctx context.Context, listenAddrs []ma.Multiaddr) e
 		return errors.New("node already started")
 	}
 
+	n.laddrs = listenAddrs
 	bnet, err := swarm.NewNetwork(ctx, listenAddrs, n.peerId, n.peerStore, nil)
 	if err != nil {
 		return err
@@ -81,6 +113,11 @@ func (n *Node) GetId() string {
 // GetPeerId returns the peer ID of the node.
 func (n *Node) GetPeerId() peer.ID {
 	return n.peerId
+}
+
+// BuildSpec returns the specification for this node.
+func (n *Node) BuildSpec() (*NodeSpec, error) {
+	return NewNodeSpec(n.id, n.priv)
 }
 
 // GetPeerMultiaddr returns the p2p multiaddr representing this peer.

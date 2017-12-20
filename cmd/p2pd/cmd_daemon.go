@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+
 	"github.com/paralin/go-p2pd/daemon"
 	"github.com/urfave/cli"
 )
@@ -25,6 +27,17 @@ func init() {
 				Value:       cliDaemonConfig.DataPath,
 				Destination: &cliDaemonConfig.DataPath,
 			},
+			cli.StringFlag{
+				Name:        "data-db",
+				Usage:       "Database to use, currently boltdb is the only supported value.",
+				Value:       cliDaemonConfig.DataDb,
+				Destination: &cliDaemonConfig.DataDb,
+			},
+			cli.StringSliceFlag{
+				Name:  "node-addr-filter",
+				Usage: "List of node address filters.",
+				Value: &cliDaemonConfig.AddrFilters,
+			},
 		},
 		Action: func(c *cli.Context) error {
 			d, err := daemon.NewDaemon(*cliDaemonConfig)
@@ -32,7 +45,7 @@ func init() {
 				return err
 			}
 
-			return d.Run()
+			return d.Run(context.Background())
 		},
 	})
 }
