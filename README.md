@@ -15,13 +15,72 @@ go-libp2pd
 ## Install
 
 ```sh
-TODO
+$ go get -u -v github.com/paralin/go-p2pd/cmd/p2pd
+```
+
+Optionally:
+
+```sh
+$ go get -u -v github.com/paralin/go-p2pd/cmd/p2pdctl
 ```
 
 ## Usage
 
+You can use the control commands prefixed with either `p2pd ctl` or `p2pdctl` depending on how you built the client.
+
+### Root `p2pd` Usage
+
+```
+NAME:
+   p2pd - p2pd daemon and cli.
+
+USAGE:
+   p2pd [global options] command [command options] [arguments...]
+
+AUTHOR:
+   Christian Stewart <christian@paral.in>
+
+COMMANDS:
+     ctl      Ctl contains all control commands.
+     daemon   starts the p2pd daemon
+     help, h  Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --help, -h  show help
+```
+
+### `p2pdctl node` Usage
+
+```
+NAME:
+   p2pdctl node - Contains all node-related subcommands.
+
+USAGE:
+   p2pdctl node command [command options] [arguments...]
+
+COMMANDS:
+     add     Adds a new node to the p2pd instance.
+     start   Starts a previously created node.
+     listen  Listen commands a started node to listen on an additional address.
+     status  Status checks node's status.
+
+OPTIONS:
+   --help, -h  show help
+```
+
+## Getting Started
+
+Here is an example:
+
 ```sh
-# TODO
+# Start the p2pd daemon
+$ ./p2pd daemon --data-path=./data &
+# Create a node
+$ ./p2pd node add test
+# Start it
+$ ./p2pd node start test
+# Tell it to listen on port 4001
+$ ./p2pd node listen test /ip4/0.0.0.0/tcp/4001
 ```
 
 ## Contribute
