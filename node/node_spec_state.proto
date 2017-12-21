@@ -1,0 +1,10 @@
+syntax = "proto3";
+package node;
+
+// NodeSpecState is a desired state of a node in the db.
+enum NodeSpecState {
+	// NODE_SPEC_STATE_STOPPED indicates the node is inactive.
+  NODE_SPEC_STATE_STOPPED = 0;
+	// NODE_SPEC_STATE_STARTED indicates the node should be running.
+  NODE_SPEC_STATE_STARTED = 1;
+}

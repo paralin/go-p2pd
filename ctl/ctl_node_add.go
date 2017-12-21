@@ -34,6 +34,6 @@ func ctlNodeAdd(c *cli.Context) error {
 		return err
 	}
 
-	fmt.Printf("Created node\n\t/p2p/%s\n\n", resp.GetNodePeerId())
+	fmt.Printf("Created node\n\t/p2p/%s\n", resp.GetNodePeerId())
 	return nil
 }

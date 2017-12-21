@@ -37,10 +37,7 @@ func ctlNodeStart(c *cli.Context) error {
 	fmt.Printf("Started node\n\t/p2p/%s\n", resp.GetNodePeerId())
 
 	if len(resp.GetNodeListenAddrs()) > 0 {
-		fmt.Printf("Swarm listening on\n")
-		for _, addr := range resp.GetNodeListenAddrs() {
-			fmt.Printf("\t%s\n", addr)
-		}
+		fmt.Printf(control.NodeListenResponseString(control.NodeListenResponse(resp)))
 	}
 
 	return nil

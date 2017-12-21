@@ -103,9 +103,9 @@ func (d *Daemon) Run(ctx context.Context) error {
 // RegisterNode registers an existing node.
 func (d *Daemon) RegisterNode(n *node.Node) error {
 	id := n.GetId()
-	_, loaded := d.runningNodes.LoadOrStore(id, n)
+	_, loaded := d.runningNodes.Load(id)
 	if loaded {
-		return errors.Errorf("node already running with id: %s", id)
+		return errors.Errorf("node already exists and running with id: %s", id)
 	}
 
 	// if the node is not running, allow overwriting it.

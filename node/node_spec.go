@@ -3,6 +3,7 @@ package node
 import (
 	"errors"
 
+	"github.com/Sirupsen/logrus"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -20,13 +21,13 @@ type NodeSpec struct {
 }
 
 // NewNodeSpec builds a new NodeSpec.
-func NewNodeSpec(id string, privKey crypto.PrivKey) (*NodeSpec, error) {
+func NewNodeSpec(id string, privKey crypto.PrivKey, state NodeSpecState, addrs []string) (*NodeSpec, error) {
 	privData, err := crypto.MarshalPrivateKey(privKey)
 	if err != nil {
 		return nil, err
 	}
 
-	return &NodeSpec{ID: id, PrivKey: privData}, nil
+	return &NodeSpec{ID: id, PrivKey: privData, State: state, Addrs: addrs}, nil
 }
 
 // Validate checks the spec.
@@ -51,4 +52,13 @@ func (s *NodeSpec) UnmarshalPrivKey() (crypto.PrivKey, error) {
 // AddAddress adds a listen address.
 func (s *NodeSpec) AddAddress(addr ma.Multiaddr) {
 	s.Addrs = append(s.Addrs, addr.String())
+}
+
+// LogFields adds logging fields to an entry.
+func (s *NodeSpec) LogFields(le *logrus.Entry) *logrus.Entry {
+	nod := s
+	return le.
+		WithField("id", nod.ID).
+		WithField("state", nod.State.String()).
+		WithField("naddrs", len(nod.Addrs))
 }

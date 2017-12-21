@@ -18,31 +18,32 @@ func (d *Daemon) loadStartDbNodes() error {
 	}
 
 	started := 0
+	specStopped := 0
 	for _, nod := range nodeList {
-		nle := le.
-			WithField("id", nod.ID).
-			WithField("state", nod.State.String())
+		nle := nod.LogFields(le)
 
-		nle.Debug("loading node")
-		if nod.State != node.NodeSpecState_STARTED {
+		nle.WithField("state", nod.State.String()).Debug("loading node")
+		if nod.State != node.NodeSpecState_NODE_SPEC_STATE_STARTED {
+			specStopped++
 			continue
 		}
 
 		nle.Debug("starting node")
 		if _, err := d.StartNode(nod); err != nil {
 			nle.WithError(err).Error("unable to start node")
-			nod.State = node.NodeSpecState_STOPPED
+			nod.State = node.NodeSpecState_NODE_SPEC_STATE_STOPPED
 			if err := d.daemonDb.SaveNode(nod); err != nil {
 				return err
 			}
 			continue
 		}
 		started++
+		nle = nod.LogFields(le)
 		nle.Info("started node")
 	}
 
-	if started == 0 && len(nodeList) > 0 {
-		return errors.Errorf("couldn't start any of the %d registered nodes", len(nodeList))
+	if started == 0 && (len(nodeList)-specStopped) > 0 {
+		return errors.Errorf("couldn't start any of the %d registered nodes", len(nodeList)-specStopped)
 	}
 
 	return nil
@@ -58,12 +59,13 @@ func (d *Daemon) StartNode(spec *node.NodeSpec) (*node.Node, error) {
 		return exist.(*node.Node), nil
 	}
 
-	n, err := node.FromSpec(spec)
+	n, err := node.FromSpec(spec, d.log)
 	if err != nil {
 		return nil, err
 	}
 
 	var addrs []ma.Multiaddr
+	var addrsStrs []string
 	for ai, addr := range spec.Addrs {
 		maddr, err := ma.NewMultiaddr(addr)
 		if err != nil {
@@ -74,6 +76,7 @@ func (d *Daemon) StartNode(spec *node.NodeSpec) (*node.Node, error) {
 			continue
 		}
 		addrs = append(addrs, maddr)
+		addrsStrs = append(addrsStrs, maddr.String())
 	}
 
 	actNode, loaded := d.runningNodes.LoadOrStore(n.GetId(), n)
@@ -84,10 +87,33 @@ func (d *Daemon) StartNode(spec *node.NodeSpec) (*node.Node, error) {
 
 	if err := n.StartWithAddrs(d.ctx, addrs); err != nil {
 		d.runningNodes.Delete(spec.ID)
-		spec.State = node.NodeSpecState_STOPPED
+		spec.State = node.NodeSpecState_NODE_SPEC_STATE_STOPPED
 		_ = d.daemonDb.SaveNode(spec)
+		d.log.WithError(err).WithField("addrs", addrs).Error("unable to start node")
 		return nil, err
 	}
 
+	spec.State = node.NodeSpecState_NODE_SPEC_STATE_STARTED
+	spec.Addrs = addrsStrs
+	if err := d.daemonDb.SaveNode(spec); err != nil {
+		d.log.WithError(err).Error("unable to save updated node state")
+	}
+
 	return n, nil
+}
+
+// flushNodeSpec flushes a node state spec to the db.
+func (d *Daemon) flushNodeSpec(id string) error {
+	nodInter, ok := d.runningNodes.Load(id)
+	if !ok {
+		return errors.Errorf("node with id not found: %s", id)
+	}
+
+	nod := nodInter.(*node.Node)
+	nodSpec, err := nod.BuildSpec()
+	if err != nil {
+		return err
+	}
+
+	return d.daemonDb.SaveNode(nodSpec)
 }

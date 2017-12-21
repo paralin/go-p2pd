@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"github.com/libp2p/go-maddr-filter"
+	ma "github.com/multiformats/go-multiaddr"
 	"net"
 )
 
@@ -15,4 +16,13 @@ func parseAddrFilters(filters []string) *filter.Filters {
 		addrFilter.AddDialFilter(ipnet)
 	}
 	return addrFilter
+}
+
+// multiAddrsToString converts a list of multiaddrs to a list of strings.
+func multiAddrsToString(addrs []ma.Multiaddr) (outAddrs []string) {
+	outAddrs = make([]string, len(addrs))
+	for i := 0; i < len(addrs); i++ {
+		outAddrs[i] = addrs[i].String()
+	}
+	return
 }

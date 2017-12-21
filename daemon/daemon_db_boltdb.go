@@ -36,6 +36,7 @@ func (d *daemonDatabaseBolt) SaveNode(spec *node.NodeSpec) error {
 		return err
 	}
 
+	defer d.db.Commit()
 	return d.db.Save(spec)
 }
 
