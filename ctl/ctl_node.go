@@ -10,6 +10,7 @@ func init() {
 	initNodeAdd()
 	initNodeStart()
 	initNodeListen()
+	initNodeStatus()
 	CtlCommands = append(CtlCommands, cli.Command{
 		Name:        "node",
 		Usage:       "Contains all node-related subcommands.",

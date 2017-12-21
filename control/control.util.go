@@ -34,3 +34,11 @@ func (r *ListenNodeRequest) Validate() error {
 	}
 	return nil
 }
+
+// Validate does cursory validation of the message.
+func (r *StatusNodeRequest) Validate() error {
+	if r.GetNodeId() == "" {
+		return errors.New("node id cannot be empty")
+	}
+	return nil
+}

@@ -1,6 +1,8 @@
 syntax = "proto3";
 package control;
 
+import "github.com/paralin/go-p2pd/node/node_spec_state.proto";
+
 // CreateNodeRequest is the argument to CreateNode.
 message CreateNodeRequest {
   // NodeId is the desired ID for the node.
@@ -43,6 +45,22 @@ message ListenNodeResponse {
   repeated string node_listen_addrs = 2;
 }
 
+// StatusNodeRequest is the argument to StatusNode.
+message StatusNodeRequest {
+  // NodeId is the desired ID for the status report.
+  string node_id = 1;
+}
+
+// StatusNodeResponse is the response to StatusNode.
+message StatusNodeResponse {
+  // NodePeerId is the peer ID of the node.
+  string node_peer_id = 1;
+  // NodeListenAddrs are the addresses the node is listening on.
+  repeated string node_listen_addrs = 2;
+  // NodeState is the state of the node.
+  node.NodeSpecState node_state = 3;
+}
+
 // ControlService controls the p2pd daemon.
 service ControlService {
   // CreateNode creates a new node.
@@ -51,4 +69,6 @@ service ControlService {
   rpc StartNode(StartNodeRequest) returns (StartNodeResponse) {}
   // ListenNode instructs a node to listen to an address.
   rpc ListenNode(ListenNodeRequest) returns (ListenNodeResponse) {}
+  // StatusNode checks a node's status.
+  rpc StatusNode(StatusNodeRequest) returns (StatusNodeResponse) {}
 }
